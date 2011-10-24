@@ -4,4 +4,7 @@ nbproject/*
 app/cache/*
 app/cache/dev/*
 app/config/parameters.ini
+<<<<<<< HEAD
 .DS_Store*
+=======
+>>>>>>> d78191ee6d14a95ad4487a5d4c0a2665122c9612
