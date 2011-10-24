@@ -1,0 +1,178 @@
+PImage copter, ladrillo, explosions;
+PImage[] cloudI= new PImage[2];
+
+boolean explosion=false;
+
+//posicion del cursor
+short nX=350;
+short nY=200;
+
+//numero de columnas
+byte Ncolumnas=2;
+
+//posicion y de la paredn cundo x=700, para hacer un random en la columna
+byte Xpared=0;
+byte Ypared=0;
+
+//numero de imagenes de ladrillo que tienen las columnas
+byte Dcolumnas=6;
+
+//pixeles que se desplaza por fotograma
+byte velocidad=10;
+
+short [][][] pared = new short[2][2][60];
+for(byte i=0;i<pared[0][0].length();i++){
+    if(i==0){
+        pared[0][0][i]=0;
+        pared[1][0][i]=0;
+    }
+    else{
+        pared[0][0][i]=pared[0][0][(i-1)]+18;
+        pared[1][0][i]=pared[1][0][(i-1)]+18;
+    }
+    pared[0][1][i]=14;
+    pared[1][1][i]=372;
+}
+
+short [][] columna = new short[2][7]; 
+columna[0][0]=720;
+for(byte i=1;i<columna[0].length();i++){
+    columna[0][i]=-20;
+}
+
+short [][] cloud = new short[3][2];
+cloud[0][0]=-120;
+cloud[2][0]=60;
+cloud[0][1]=240;
+cloud[1][1]=170;
+cloud[2][1]=60;
+
+void setup(){
+    frameRate(60);
+    size(700,400);
+    noCursor();
+    ladrillo=loadImage("image/ladrillo.png");
+    cloudI[0]=loadImage("image/cloud.png");
+    cloudI[1]=loadImage("image/cloud2.png");
+    copter=loadImage("image/copter.png");
+    explosions=loadImage("image/explosion.png");
+}
+
+void draw(){
+    background(0, 191, 255);
+    clouds();
+    paredes();
+    columnas();
+    if(explosion==false){
+        image(copter,nX-25,nY-25,50,50);
+    }
+    else{
+        image(explosions,nX-37,nY-37,70,70);
+    }
+}
+
+void mouseMoved(){
+    nX=mouseX;
+    nY=mouseY;
+}
+
+void paredes(){
+    for(byte i=0;i<pared[0][0].length();i++){
+        for(byte j=0;j<2;j++){
+            if(pared[j][0][i]<=-18&&i!=0){
+                pared[j][0][i]=pared[j][0][i-1]+18+velocidad;
+            }
+            else if(pared[j][0][i]<=-18){
+                pared[j][0][i]=pared[j][0][pared[0][0].length()-1]+18;
+            }
+        }
+
+
+//revisar paredes aleatorias
+        /*float r=random(1);
+        if(pared[0][0][i]==700&&((r<0.5&&pared[1][1][i]<=372)||(pared[0][1][i]<14))){
+            pared[0][1][i]=pared[0][1][i]+14;
+            pared[1][1][i]=pared[1][1][i]+14;
+        }
+        else if(pared[0][0][i]==700){
+            pared[0][1][i]=pared[0][1][i]-14;
+            pared[1][1][i]=pared[1][1][i]-14;
+        }*/
+        if(pared[0][0][i]==700){
+            Xpared=pared[0][1][i];
+            Ypared=pared[1][1][i];
+        }
+        pared[0][0][i]=pared[0][0][i]-velocidad;
+        pared[1][0][i]=pared[1][0][i]-velocidad;
+
+        //dibujo las paredes
+        image(ladrillo,pared[0][0][i],pared[0][1][i],20,15);
+        image(ladrillo,pared[1][0][i],pared[1][1][i],20,15);
+        byte aux1 = pared[0][1][i]/14;
+        for(byte j=0;j<aux1;j++){
+            image(ladrillo,pared[0][0][i],(pared[0][1][i]-((j+1)*14)),20,15);
+        }
+        byte aux2 = pared[1][1][i]/14;
+        for(byte j=0;j<aux2;j++){
+            image(ladrillo,pared[1][0][i],(pared[1][1][i]+((j+1)*14)),20,15);
+        }
+
+        //choque paredes
+        if(nY-29<pared[0][1][i]||nY+16>pared[1][1][i]){
+            explosion=true;
+        }
+    }
+}
+
+void columnas(){
+    for(byte i=0;i<Ncolumnas;i++){
+        if(columna[0][i]==700){
+            short r=random(Xpared+15,Ypared-(14*Dcolumnas));
+            columna[1][i]=r;
+        }
+        
+        if(columna[0][i]<=-20&&i!=0){
+            columna[0][i]=columna[0][i-1]+ceil((700-((Ncolumnas-1)*20))/Ncolumnas)+70;
+        }
+        else if(columna[0][i]<=-20){
+            columna[0][i]=columna[0][Ncolumnas-1]+ceil((700-((Ncolumnas-1)*20))/Ncolumnas)+70;
+        }
+        columna[0][i]=columna[0][i]-velocidad;
+
+        //dibujo las columnas
+        image(ladrillo,columna[0][i],columna[1][i],20,15);
+        for(byte j=0;j<(Dcolumnas-1);j++){
+            image(ladrillo,columna[0][i],columna[1][i]+(14*(j+1)),20,15);
+        }
+
+        //choque de columnas
+        if((nY+16>columna[1][i])&&(nY-33<(columna[1][i]+(Dcolumnas-1)*13))&&(nX-30<columna[0][i]+13)&&(nX+24>columna[0][i])){
+            explosion=true;
+        }
+    }
+}
+
+void clouds(){
+    if(cloud[2][0]>cloud[2][1]){
+        for(byte i=0;i<3;i++){
+            short aux=cloud[i][0];
+            cloud[i][0]=cloud[i][1];
+            cloud[i][1]=aux;
+        }
+        PImage aux=cloudI[0];
+        cloudI[0]=cloudI[1];
+        cloudI[1]=aux;
+    }
+    for(byte i=0;i<cloud[0].length();i++){        
+        if(cloud[0][i]<=cloud[2][i]*(-2)){
+            cloud[2][i]=ceil(random(60,100));
+            short aux1=random(-(cloud[2][i]/4),400-cloud[2][i]/4);
+            cloud[1][i]=aux1;
+            cloud[0][i]=700;
+        }
+        cloud[0][i]=cloud[0][i]-((cloud[2][i]/60)*(velocidad/2));
+
+        //dibujo las nubes
+        image(cloudI[i],cloud[0][i],cloud[1][i],cloud[2][i]*2,cloud[2][i]);
+    }
+}
